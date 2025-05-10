@@ -8,25 +8,53 @@ let form = document.querySelector('form');
 let promptInput = document.querySelector('input[name="prompt"]');
 let output = document.querySelector('.output');
 
+const md = new MarkdownIt();
+let conversationHistory = [];
+let pendingResponse = '';
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function renderConversation() {
+  let html = '';
+  conversationHistory.forEach(message => {
+    if (message.role === 'user') {
+      html += `<div class="user-message"><strong>You:</strong> ${escapeHtml(message.parts[0].text)}</div>`;
+    } else {
+      html += `<div class="model-message"><strong>Assistant:</strong> ${md.render(message.parts[0].text)}</div>`;
+    }
+  });
+  
+  if (pendingResponse) {
+    html += `<div class="model-message"><strong>Assistant:</strong> ${md.render(pendingResponse)}</div>`;
+  }
+  
+  output.innerHTML = html;
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
 form.onsubmit = async (ev) => {
   ev.preventDefault();
-  output.textContent = 'Generating...';
+  const userMessage = promptInput.value.trim();
+  if (!userMessage) return;
+
+  // Add user message to history
+  conversationHistory.push({
+    role: 'user',
+    parts: [{ text: userMessage }]
+  });
+
+  promptInput.value = '';
+  pendingResponse = '';
+  renderConversation();
 
   try {
-    let contents = [
-      {
-        role: 'user',
-        parts: [
-          { text: promptInput.value }
-        ]
-      }
-    ];
-
-    // Call the text-bison-002 model, and get a stream of results
     const genAI = new GoogleGenerativeAI(API_KEY);
     const model = genAI.getGenerativeModel({
-      // model: "gemini-1.0-pro", 
-      model:'gemini-1.5-pro',
+      model: 'gemini-2.0-flash',
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -35,16 +63,26 @@ form.onsubmit = async (ev) => {
       ],
     });
 
-    const result = await model.generateContentStream({ contents });
+    const result = await model.generateContentStream({ 
+      contents: conversationHistory 
+    });
 
-    // Read from the stream and interpret the output as markdown
     let buffer = [];
-    let md = new MarkdownIt();
-    for await (let response of result.stream) {
-      buffer.push(response.text());
-      output.innerHTML = md.render(buffer.join(''));
+    for await (const chunk of result.stream) {
+      buffer.push(chunk.text());
+      pendingResponse = buffer.join('');
+      renderConversation();
     }
+
+    // Add final response to history
+    conversationHistory.push({
+      role: 'model',
+      parts: [{ text: pendingResponse }]
+    });
+    pendingResponse = '';
+    renderConversation();
+
   } catch (e) {
-    output.innerHTML += '<hr>' + e;
+    output.innerHTML += `<div class="error">Error: ${escapeHtml(e.message)}</div>`;
   }
 };

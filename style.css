@@ -89,14 +89,14 @@ main {
 }
 
 .output-container {
-  max-height: 350px; /* Adjust the height as necessary */
+  max-height: 350px;
   overflow-y: auto;
   padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
   background: #f9f9fa;
+  padding-left: 1rem; /* Add padding to the left to prevent text cutoff */
 }
-
 .output {
   font-size: 1.25rem;
   color: #555;
@@ -111,4 +111,23 @@ footer {
   position: fixed;
   bottom: 0;
   width: 100%;
+}
+
+.user-message {
+  background: #f0f0f0;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+
+.model-message {
+  background: #e3f2fd;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
 }

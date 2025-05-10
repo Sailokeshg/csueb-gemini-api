@@ -36,6 +36,12 @@ function renderConversation() {
   window.scrollTo(0, document.body.scrollHeight);
 }
 
+function clearChat() {
+  conversationHistory = [];
+  pendingResponse = '';
+  renderConversation();
+}
+
 form.onsubmit = async (ev) => {
   ev.preventDefault();
   const userMessage = promptInput.value.trim();
@@ -46,6 +52,8 @@ form.onsubmit = async (ev) => {
     role: 'user',
     parts: [{ text: userMessage }]
   });
+
+  clearBtn.onclick = clearChat;
 
   promptInput.value = '';
   pendingResponse = '';

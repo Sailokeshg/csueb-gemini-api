@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 import MarkdownIt from 'markdown-it';
 import Header from './components/Header';
@@ -12,12 +12,22 @@ const App = () => {
   const [conversationHistory, setConversationHistory] = useState([]);
   const [pendingResponse, setPendingResponse] = useState('');
   const [error, setError] = useState(null);
+  const messagesEndRef = useRef(null);
 
   const escapeHtml = (text) => {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   };
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [conversationHistory, pendingResponse]);
 
   const handleSubmit = async (userMessage) => {
     if (!userMessage.trim()) return;
@@ -33,7 +43,22 @@ const App = () => {
     try {
       const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
+        systemInstruction: `You are a helpful assistant for California State University, East Bay (CSUEB). 
+        You should focus on providing information about:
+        - Academic programs and courses
+        - Admissions and enrollment
+        - Campus life and facilities
+        - Student services and resources
+        - Faculty and staff information
+        - Campus events and activities
+        - Financial aid and scholarships
+        - Career services and internships
+        - Library and research resources
+        - Housing and dining options
+        
+        If asked about topics unrelated to CSUEB, politely redirect the conversation back to university-related topics.
+        Always be helpful, accurate, and professional in your responses.`,
         safetySettings: [
           {
             category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -69,10 +94,16 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
       <Header />
-      <main className="container mx-auto p-4">
-        <ChatForm onSubmit={handleSubmit} onClear={handleClear} />
+      
+      {/* Main content area with padding for fixed input */}
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-5xl pb-32">
+        {/* Show initial form only if no conversation */}
+        {conversationHistory.length === 0 && !pendingResponse && (
+          <ChatForm onSubmit={handleSubmit} onClear={handleClear} />
+        )}
+        
         <ChatOutput
           conversationHistory={conversationHistory}
           pendingResponse={pendingResponse}
@@ -80,7 +111,23 @@ const App = () => {
           escapeHtml={escapeHtml}
           md={md}
         />
+        
+        {/* Invisible div to scroll to */}
+        <div ref={messagesEndRef} />
       </main>
+
+      {/* Fixed input at bottom - ONLY show after conversation has started */}
+      {(conversationHistory.length > 0 || pendingResponse) && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+          <div className="container mx-auto px-4 py-4 max-w-5xl">
+            <div className="flex items-center space-x-3">
+              <div className="flex-1">
+                <ChatForm onSubmit={handleSubmit} onClear={handleClear} isSticky={true} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

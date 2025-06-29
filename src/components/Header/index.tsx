@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const Header = () => (
   <header className="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-lg">
@@ -13,7 +13,9 @@ const Header = () => (
           <h1 className="text-2xl font-bold tracking-wide">
             California State University, East Bay
           </h1>
-          <p className="text-blue-200 text-sm mt-1">AI-Powered Support Assistant</p>
+          <p className="text-blue-200 text-sm mt-1">
+            AI-Powered Support Assistant
+          </p>
         </div>
       </div>
     </div>

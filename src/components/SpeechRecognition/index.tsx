@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 
 // Add type declarations for SpeechRecognition if not present
 type SpeechRecognition = typeof window.SpeechRecognition extends undefined
@@ -26,31 +26,35 @@ interface SpeechRecognitionErrorEvent {
 
 const useSpeechRecognition = () => {
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [error, setError] = useState('');
+  const [transcript, setTranscript] = useState("");
+  const [error, setError] = useState("");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setError('Speech recognition not supported in this browser');
+    if (
+      !("webkitSpeechRecognition" in window) &&
+      !("SpeechRecognition" in window)
+    ) {
+      setError("Speech recognition not supported in this browser");
       return;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
     recognitionRef.current = new SpeechRecognition();
-    
+
     const recognition = recognitionRef.current;
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang = "en-US";
 
     recognition.onstart = () => {
       setIsListening(true);
-      setError('');
+      setError("");
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = '';
+      let finalTranscript = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
           finalTranscript += event.results[i][0].transcript;
@@ -79,11 +83,11 @@ const useSpeechRecognition = () => {
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
-      setTranscript('');
+      setTranscript("");
       try {
         recognitionRef.current.start();
       } catch (err) {
-        setError('Failed to start speech recognition');
+        setError("Failed to start speech recognition");
       }
     }
   };
@@ -100,7 +104,7 @@ const useSpeechRecognition = () => {
     error,
     startListening,
     stopListening,
-    resetTranscript: () => setTranscript('')
+    resetTranscript: () => setTranscript(""),
   };
 };
 

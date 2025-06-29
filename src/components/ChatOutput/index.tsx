@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface ChatOutputProps {
   conversationHistory: { role: string; parts: { text: string }[] }[];
@@ -15,6 +15,18 @@ const ChatOutput: React.FC<ChatOutputProps> = ({
   escapeHtml, 
   md 
 }) => {
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  const copyToClipboard = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000); // Reset after 2 seconds
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
   if (conversationHistory.length === 0 && !pendingResponse && !error) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-8 text-center border border-gray-100">
@@ -45,10 +57,10 @@ const ChatOutput: React.FC<ChatOutputProps> = ({
               message.role === 'user'
                 ? 'bg-blue-600 text-white rounded-2xl rounded-br-md'
                 : 'bg-white text-gray-800 rounded-2xl rounded-bl-md border border-gray-200'
-            } shadow-md overflow-hidden`}
+            } shadow-md overflow-hidden group`}
           >
             {/* Header */}
-            <div className={`px-6 py-3 border-b ${
+            <div className={`px-6 py-3 border-b flex items-center justify-between ${
               message.role === 'user' 
                 ? 'border-blue-500 bg-blue-700' 
                 : 'border-gray-100 bg-gray-50'
@@ -72,6 +84,29 @@ const ChatOutput: React.FC<ChatOutputProps> = ({
                   {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
+              
+              {/* Copy Button */}
+              <button
+                onClick={() => copyToClipboard(message.parts[0].text, index)}
+                className={`opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 rounded-md hover:bg-opacity-20 hover:bg-white ${
+                  message.role === 'user' 
+                    ? 'text-blue-100 hover:text-white' 
+                    : 'text-gray-400 hover:text-gray-600'
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  message.role === 'user' ? 'focus:ring-blue-300' : 'focus:ring-gray-300'
+                }`}
+                title="Copy message"
+              >
+                {copiedIndex === index ? (
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </button>
             </div>
 
             {/* Content */}
@@ -97,9 +132,9 @@ const ChatOutput: React.FC<ChatOutputProps> = ({
       
       {pendingResponse && (
         <div className="flex justify-start">
-          <div className="max-w-4xl w-full bg-white text-gray-800 rounded-2xl rounded-bl-md border border-gray-200 shadow-md overflow-hidden">
+          <div className="max-w-4xl w-full bg-white text-gray-800 rounded-2xl rounded-bl-md border border-gray-200 shadow-md overflow-hidden group">
             {/* Header */}
-            <div className="px-6 py-3 border-b border-gray-100 bg-gray-50">
+            <div className="px-6 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
               <div className="flex items-center">
                 <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold mr-3 text-white">
                   🤖
@@ -112,6 +147,23 @@ const ChatOutput: React.FC<ChatOutputProps> = ({
                 </div>
                 <span className="ml-2 text-xs text-gray-500">Typing...</span>
               </div>
+              
+              {/* Copy Button for pending response */}
+              <button
+                onClick={() => copyToClipboard(pendingResponse, -1)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 rounded-md hover:bg-opacity-20 hover:bg-gray-200 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+                title="Copy message"
+              >
+                {copiedIndex === -1 ? (
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </button>
             </div>
 
             {/* Content */}
